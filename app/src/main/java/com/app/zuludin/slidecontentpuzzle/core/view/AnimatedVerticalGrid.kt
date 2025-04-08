@@ -33,7 +33,7 @@ fun <ITEM, KEY> AnimatedVerticalGrid(
     columns: Int,
     rows: Int,
     modifier: Modifier = Modifier,
-    animationSpec: AnimationSpec<DpOffset> = tween(300),
+    animationSpec: AnimationSpec<DpOffset> = tween(1000),
     itemContent: @Composable (BoxScope.(ITEM) -> Unit)
 ) = BoxWithConstraints(modifier) {
     val itemKeys = items.map { itemKey(it) }
