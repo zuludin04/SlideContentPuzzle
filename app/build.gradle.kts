@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.android.navigation)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation(libs.androidx.lifecycle.viewModelCompose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

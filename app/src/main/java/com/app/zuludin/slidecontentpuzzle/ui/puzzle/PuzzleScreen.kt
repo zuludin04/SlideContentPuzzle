@@ -1,4 +1,4 @@
-package com.app.zuludin.slidecontentpuzzle.ui
+package com.app.zuludin.slidecontentpuzzle.ui.puzzle
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,14 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -26,19 +25,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.zuludin.slidecontentpuzzle.R
 import com.app.zuludin.slidecontentpuzzle.core.utils.Item
-import com.app.zuludin.slidecontentpuzzle.core.utils.createItems
-import com.app.zuludin.slidecontentpuzzle.core.utils.initialItems
 import com.app.zuludin.slidecontentpuzzle.core.view.AnimatedVerticalGrid
 import com.app.zuludin.slidecontentpuzzle.core.view.PuzzleSolvedDialog
 
-private const val PUZZLE_SIZE = 4
+private const val PUZZLE_SIZE = 3
 
 @Composable
-fun PuzzleScreen() {
-    var items by remember { mutableStateOf(createItems(PUZZLE_SIZE)) }
-    var showDialog by remember { mutableStateOf(true) }
+fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
@@ -76,20 +73,15 @@ fun PuzzleScreen() {
                     .padding(8.dp)
             ) {
                 AnimatedVerticalGrid(
-                    items = items,
+                    items = uiState.board,
                     itemKey = Item::id,
                     columns = PUZZLE_SIZE,
                     rows = PUZZLE_SIZE,
                 ) { item ->
                     if (item.id != 0) {
                         Item(item) { id ->
-                            val index = items.indexOfFirst { it.id == id }
-                            val swapped =
-                                onSwipePuzzle(index, items)
-                            items = swapped
-
-                            val initial = initialItems(PUZZLE_SIZE * PUZZLE_SIZE).map { it.id }
-                            showDialog = initial == items.map { it.id }
+                            val index = uiState.board.indexOfFirst { it.id == id }
+                            viewModel.swipeTile(index, PUZZLE_SIZE, uiState.board)
                         }
                     } else {
                         Box(modifier = Modifier)
@@ -98,54 +90,16 @@ fun PuzzleScreen() {
             }
 
             Box(modifier = Modifier.height(64.dp))
+            ElevatedButton(onClick = {}) { Text("Auto Solve") }
+            Box(modifier = Modifier.height(64.dp))
         }
     }
 
-    if (showDialog) {
-        Dialog(onDismissRequest = { showDialog = false }) {
+    if (uiState.showSuccessDialog) {
+        Dialog(onDismissRequest = { viewModel.dismissSuccessDialog() }) {
             PuzzleSolvedDialog()
         }
     }
-}
-
-private fun onSwipePuzzle(index: Int, items: List<Item>): List<Item> {
-    val data = items.toMutableList()
-
-    val zeroItem = items.first { it.id == 0 }
-    val emptyTilePosIndex = items.indexOf(zeroItem)
-    val emptyTilePosRow = emptyTilePosIndex / PUZZLE_SIZE
-    val emptyTilePosCol = emptyTilePosIndex % PUZZLE_SIZE
-
-    val currentTileRow = index / PUZZLE_SIZE
-    val currentTileCol = index % PUZZLE_SIZE
-
-    if ((currentTileRow - 1 == emptyTilePosRow) &&
-        (currentTileCol == emptyTilePosCol)
-    ) {
-        // up
-        data[emptyTilePosIndex] = data[index]
-        data[index] = zeroItem
-    } else if ((currentTileRow + 1 == emptyTilePosRow) &&
-        (currentTileCol == emptyTilePosCol)
-    ) {
-        // down
-        data[emptyTilePosIndex] = data[index]
-        data[index] = zeroItem
-    } else if ((currentTileRow == emptyTilePosRow) &&
-        (currentTileCol - 1 == emptyTilePosCol)
-    ) {
-        // left
-        data[emptyTilePosIndex] = data[index]
-        data[index] = zeroItem
-    } else if ((currentTileRow == emptyTilePosRow) &&
-        (currentTileCol + 1 == emptyTilePosCol)
-    ) {
-        // right
-        data[emptyTilePosIndex] = data[index]
-        data[index] = zeroItem
-    }
-
-    return data
 }
 
 @Composable
