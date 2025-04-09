@@ -2,15 +2,19 @@ package com.app.zuludin.slidecontentpuzzle.ui.puzzle
 
 import android.os.Build
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -23,12 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.zuludin.slidecontentpuzzle.R
 import com.app.zuludin.slidecontentpuzzle.core.utils.Item
+import com.app.zuludin.slidecontentpuzzle.core.utils.formatTimer
 import com.app.zuludin.slidecontentpuzzle.core.view.AnimatedVerticalGrid
 import com.app.zuludin.slidecontentpuzzle.core.view.PuzzleSolvedDialog
 
@@ -65,12 +71,39 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
                 Box(modifier = Modifier.height(16.dp))
             }
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("STEP", color = Color.Gray, fontSize = 14.sp)
+                    Text(
+                        uiState.totalSteps.toString(),
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("TIMER", color = Color.Gray, fontSize = 14.sp)
+                    Text(
+                        uiState.timer.formatTimer(), color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+
+            Box(modifier = Modifier.height(32.dp))
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     .padding(horizontal = 16.dp)
-                    .border(5.dp, Color.White)
                     .padding(8.dp)
             ) {
                 AnimatedVerticalGrid(
@@ -91,19 +124,37 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
             }
 
             Box(modifier = Modifier.height(64.dp))
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+            Row {
                 ElevatedButton(
-                    onClick = { viewModel.autoSolvePuzzle(uiState.board) },
-                    content = { Text("Auto Solve") }
+                    onClick = { viewModel.scrambleBoard() },
+                    content = { Text("Reshuffle") },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32c4c0))
                 )
+
+                Box(modifier = Modifier.width(16.dp))
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    ElevatedButton(
+                        onClick = { viewModel.autoSolvePuzzle(uiState.board) },
+                        content = { Text("Auto Solve") },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF32c4c0))
+                    )
+                }
             }
+
             Box(modifier = Modifier.height(64.dp))
         }
     }
 
     if (uiState.showSuccessDialog) {
         Dialog(onDismissRequest = { viewModel.dismissSuccessDialog() }) {
-            PuzzleSolvedDialog()
+            PuzzleSolvedDialog {
+                viewModel.scrambleBoard()
+                viewModel.dismissSuccessDialog()
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.app.zuludin.slidecontentpuzzle.core.utils.GameEngine
 import com.app.zuludin.slidecontentpuzzle.core.utils.Item
 import com.app.zuludin.slidecontentpuzzle.core.utils.Node
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +20,8 @@ import kotlin.time.Duration.Companion.milliseconds
 data class PuzzleUiState(
     val board: List<Item> = emptyList(),
     val showSuccessDialog: Boolean = false,
+    val totalSteps: Int = 0,
+    val timer: Long = 0L
 )
 
 class PuzzleViewModel : ViewModel() {
@@ -28,7 +31,8 @@ class PuzzleViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(PuzzleUiState())
     val uiState: StateFlow<PuzzleUiState> = _uiState.asStateFlow()
 
-    private val _autoSolveNode: MutableStateFlow<Node?> = MutableStateFlow(null)
+    private var _autoSolveNode: Node? = null
+    private var _timerJob: Job? = null
 
     init {
         scrambleBoard()
@@ -48,17 +52,24 @@ class PuzzleViewModel : ViewModel() {
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            _autoSolveNode.value = gameEngine.solveAStarPuzzle(root, goalBoard)
+            _autoSolveNode = null
+            _autoSolveNode = gameEngine.solveAStarPuzzle(root, goalBoard)
         }
 
         _uiState.update {
             it.copy(
+                timer = 0L,
+                totalSteps = 0,
                 board = solvableBoard.map { id -> Item(id, Color(0xFF00BCD4)) },
             )
         }
     }
 
     fun swipeTile(index: Int, puzzleSize: Int, items: List<Item>) {
+        if (_timerJob == null) {
+            startTimer()
+        }
+
         val data = items.toMutableList()
 
         val zeroItem = items.first { it.id == 0 }
@@ -83,9 +94,12 @@ class PuzzleViewModel : ViewModel() {
         _uiState.update {
             it.copy(
                 board = data,
-                showSuccessDialog = goal.map { g -> g.id } == data.map { d -> d.id }
+                showSuccessDialog = goal.map { g -> g.id } == data.map { d -> d.id },
+                totalSteps = it.totalSteps + 1
             )
         }
+
+        stopTimer()
     }
 
     fun dismissSuccessDialog() {
@@ -93,9 +107,11 @@ class PuzzleViewModel : ViewModel() {
     }
 
     fun autoSolvePuzzle(board: List<Item>) {
+        startTimer()
+
         val items = board.toMutableList()
 
-        var currentNode = _autoSolveNode.value
+        var currentNode = _autoSolveNode
         val directions = mutableStateListOf<Node>()
 
         while (currentNode != null) {
@@ -119,11 +135,38 @@ class PuzzleViewModel : ViewModel() {
                 delay(1000.milliseconds)
                 _uiState.update {
                     it.copy(
+                        totalSteps = it.totalSteps + 1,
                         board = items,
                         showSuccessDialog = goal.map { g -> g.id } == items.map { d -> d.id }
                     )
                 }
             }
+
+            stopTimer()
         }
+    }
+
+    private fun startTimer() {
+        _uiState.update { it.copy(timer = 0L) }
+        _timerJob?.cancel()
+        _timerJob = viewModelScope.launch {
+            while (true) {
+                delay(1000)
+                _uiState.update { it.copy(timer = it.timer + 1) }
+            }
+        }
+    }
+
+    private fun stopTimer() {
+        if (_uiState.value.showSuccessDialog) {
+            _timerJob?.cancel()
+            _timerJob = null
+        }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        _timerJob?.cancel()
+        _timerJob = null
     }
 }
