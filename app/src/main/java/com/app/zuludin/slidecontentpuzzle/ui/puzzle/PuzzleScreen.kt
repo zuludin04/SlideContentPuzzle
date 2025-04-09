@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.zuludin.slidecontentpuzzle.R
+import com.app.zuludin.slidecontentpuzzle.core.theme.boardFont
 import com.app.zuludin.slidecontentpuzzle.core.utils.Item
 import com.app.zuludin.slidecontentpuzzle.core.utils.formatTimer
 import com.app.zuludin.slidecontentpuzzle.core.view.AnimatedVerticalGrid
@@ -161,16 +164,25 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
 
 @Composable
 private fun Item(item: Item, onClick: (Int) -> Unit) {
-    Box(
-        contentAlignment = Alignment.Center,
+    Card(
         modifier = Modifier
             .fillMaxSize()
-            .padding(2.dp)
-            .background(item.color)
-            .clickable {
-                onClick(item.id)
-            }
+            .padding(4.dp)
+            .clickable { onClick(item.id) },
+        colors = CardDefaults.cardColors(containerColor = item.color),
+        elevation = CardDefaults.cardElevation(5.dp)
     ) {
-        Text(item.id.toString())
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                item.id.toString(),
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                fontFamily = boardFont
+            )
+        }
     }
 }
