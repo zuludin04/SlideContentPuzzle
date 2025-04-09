@@ -1,7 +1,6 @@
 package com.app.zuludin.slidecontentpuzzle.ui.puzzle
 
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,7 +34,6 @@ import com.app.zuludin.slidecontentpuzzle.core.view.PuzzleSolvedDialog
 
 private const val PUZZLE_SIZE = 3
 
-@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
     val uiState by viewModel.uiState.collectAsState()
@@ -93,10 +91,12 @@ fun PuzzleScreen(viewModel: PuzzleViewModel = viewModel()) {
             }
 
             Box(modifier = Modifier.height(64.dp))
-            ElevatedButton(
-                onClick = { viewModel.autoSolvePuzzle(uiState.board) },
-                content = { Text("Auto Solve") }
-            )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                ElevatedButton(
+                    onClick = { viewModel.autoSolvePuzzle(uiState.board) },
+                    content = { Text("Auto Solve") }
+                )
+            }
             Box(modifier = Modifier.height(64.dp))
         }
     }

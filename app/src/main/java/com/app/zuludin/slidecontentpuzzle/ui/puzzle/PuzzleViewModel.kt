@@ -1,7 +1,6 @@
 package com.app.zuludin.slidecontentpuzzle.ui.puzzle
 
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
@@ -22,7 +21,6 @@ data class PuzzleUiState(
     val showSuccessDialog: Boolean = false,
 )
 
-@RequiresApi(Build.VERSION_CODES.N)
 class PuzzleViewModel : ViewModel() {
     private val gameEngine = GameEngine()
     private val goal = gameEngine.generateGoalBoard()
@@ -36,7 +34,6 @@ class PuzzleViewModel : ViewModel() {
         scrambleBoard()
     }
 
-    @RequiresApi(Build.VERSION_CODES.N)
     fun scrambleBoard() {
         val shuffled = goal.map { it.id }.shuffled()
         val solvableBoard = gameEngine.buildSolvableBoard(shuffled)
@@ -50,7 +47,9 @@ class PuzzleViewModel : ViewModel() {
             puzzle = initialBoard
         )
 
-        _autoSolveNode.value = gameEngine.solveAStarPuzzle(root, goalBoard)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            _autoSolveNode.value = gameEngine.solveAStarPuzzle(root, goalBoard)
+        }
 
         _uiState.update {
             it.copy(
